@@ -24,23 +24,23 @@ This project is intentionally scoped to demonstrate **AI integration for softwar
 
 ## High-Level Architecture
 [User (React UI)]
-        │
-        ▼
+│
+▼
 [API Gateway / Load Balancer]
-        │
-        ▼
+│
+▼
 [Orchestrator Service (Node/Express)]
-   ├─ Session Manager (Redis)
-   ├─ NLU Client → [NLU Service (FastAPI/Python)]
-   ├─ RAG Client → [RAG Service + Vector DB]
-   ├─ LLM Client (local/hosted)
-   ├─ Connector Manager (calendar, email, todo)
-   └─ Logger → RawLogs (MongoDB)
-        │
-        ▼
+├─ Session Manager (Redis)
+├─ NLU Client → [NLU Service (FastAPI/Python)]
+├─ RAG Client → [RAG Service + Vector DB]
+├─ LLM Client (local/hosted)
+├─ Connector Manager (calendar, email, todo)
+└─ Logger → RawLogs (MongoDB)
+│
+▼
 [ETL Pipeline] → Curated Analytics Store (Postgres / Mongo collections)
-        │
-        ▼
+│
+▼
 [Dashboard (Metabase / Grafana)]
 
 
@@ -65,8 +65,8 @@ This project is intentionally scoped to demonstrate **AI integration for softwar
 ## Complete Tech Stack
 
 ### Languages & Runtimes
-- **Node.js (18+)** – Orchestrator, workers, connectors
-- **Python (3.10+)** – NLU service, RAG ingestion, ETL jobs
+- **Node.js** – Orchestrator, workers, connectors
+- **Python** – NLU service, RAG ingestion, ETL jobs
 
 ---
 
