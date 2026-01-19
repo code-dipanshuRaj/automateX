@@ -23,24 +23,18 @@ This project is intentionally scoped to demonstrate **AI integration for softwar
 ---
 
 ## High-Level Architecture
-graph TD
     User([User React UI]) --> Gateway[API Gateway / Load Balancer]
     Gateway --> Orchestrator[Orchestrator Service Node/Express]
-
-    subgraph Core_Logic [Orchestrator Internals]
         Orchestrator --> Redis[(Session Manager Redis)]
         Orchestrator --> NLU[NLU Service FastAPI]
         Orchestrator --> RAG[RAG Service + Vector DB]
         Orchestrator --> LLM[LLM local/hosted]
         Orchestrator --> Connectors[Connector Manager Calendar/Email/Todo]
-    end
 
     Orchestrator --> MongoDB[(Raw Logs MongoDB)]
     MongoDB --> ETL[ETL Pipeline]
     ETL --> Postgres[(Analytics Store Postgres/Mongo)]
     Postgres --> Dashboard[Dashboard Metabase/Grafana]
-
-
 ---
 
 ## Core Design Principles
