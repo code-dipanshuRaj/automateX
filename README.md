@@ -21,29 +21,19 @@ Unlike a simple chatbot, this platform is designed with **software engineering r
 This project is intentionally scoped to demonstrate **AI integration for software engineering roles**, not research-only ML.
 
 ---
-
 ## High-Level Architecture
-[User (React UI)]
-│
-▼
-[API Gateway / Load Balancer]
-│
-▼
-[Orchestrator Service (Node/Express)]
-├─ Session Manager (Redis)
- ├─ NLU Client → [NLU Service (FastAPI/Python)]
- ├─ RAG Client → [RAG Service + Vector DB]
- ├─ LLM Client (local/hosted)
- ├─ Connector Manager (calendar, email, todo)
- └─ Logger → RawLogs (MongoDB)
-│
-▼
-[ETL Pipeline] → Curated Analytics Store (Postgres / Mongo collections)
-│
-▼
-[Dashboard (Metabase / Grafana)]
+    User([User React UI]) --> Gateway[API Gateway / Load Balancer]
+    Gateway --> Orchestrator[Orchestrator Service Node/Express]
+        Orchestrator --> Redis[(Session Manager Redis)]
+        Orchestrator --> NLU[NLU Service FastAPI]
+        Orchestrator --> RAG[RAG Service + Vector DB]
+        Orchestrator --> LLM[LLM local/hosted]
+        Orchestrator --> Connectors[Connector Manager Calendar/Email/Todo]
 
-
+    Orchestrator --> MongoDB[(Raw Logs MongoDB)]
+    MongoDB --> ETL[ETL Pipeline]
+    ETL --> Postgres[(Analytics Store Postgres/Mongo)]
+    Postgres --> Dashboard[Dashboard Metabase/Grafana]
 ---
 
 ## Core Design Principles
