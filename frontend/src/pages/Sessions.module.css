@@ -1,0 +1,47 @@
+.wrap {
+  padding: 0.5rem 0;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.empty {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.error {
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+  background: var(--bg-card);
+}
+
+.id {
+  display: block;
+  font-size: 0.8rem;
+  font-family: monospace;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.meta {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
