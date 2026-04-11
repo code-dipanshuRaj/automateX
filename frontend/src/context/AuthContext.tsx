@@ -9,10 +9,11 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, displayName?: string) => Promise<void>;
+  loginWithGoogle: () => void;
+  requestScope: (scope: string, pendingMessage?: string) => void;
   logout: () => Promise<void>;
   clearError: () => void;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -40,45 +41,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearError = useCallback(() => setState((s) => ({ ...s, error: null })), []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    setState((s) => ({ ...s, loading: true, error: null }));
-    try {
-      const res = await authApi.login({ email, password });
-      const token = res.token ?? null;
-      if (token) localStorage.setItem(TOKEN_KEY, token);
-      localStorage.setItem(USER_KEY, JSON.stringify(res.user));
-      setState({ user: res.user, loading: false, error: null });
-    } catch (e) {
-      setState((s) => ({
-        ...s,
-        loading: false,
-        error: e instanceof Error ? e.message : 'Login failed',
-      }));
-      throw e;
-    }
+  // ─── Google OAuth Login ─────────────────────────────────────────
+  const loginWithGoogle = useCallback(() => {
+    // Redirect to backend which will redirect to Google consent screen
+    window.location.href = '/api/auth/google';
   }, []);
 
-  const register = useCallback(
-    async (email: string, password: string, displayName?: string) => {
-      setState((s) => ({ ...s, loading: true, error: null }));
-      try {
-        const res = await authApi.register({ email, password, displayName });
-        const token = res.token ?? null;
-        if (token) localStorage.setItem(TOKEN_KEY, token);
-        localStorage.setItem(USER_KEY, JSON.stringify(res.user));
-        setState({ user: res.user, loading: false, error: null });
-      } catch (e) {
-        setState((s) => ({
-          ...s,
-          loading: false,
-          error: e instanceof Error ? e.message : 'Registration failed',
-        }));
-        throw e;
-      }
-    },
-    []
-  );
+  // ─── Request Additional Scope (Incremental Auth) ────────────────
+  const requestScope = useCallback((scope: string, pendingMessage?: string) => {
+    // Store pending message so we can re-send after auth
+    if (pendingMessage) {
+      sessionStorage.setItem('pendingChatMessage', pendingMessage);
+    }
+    const token = localStorage.getItem(TOKEN_KEY);
+    const params = new URLSearchParams({ scope });
+    if (token) params.set('token', token);
+    if (pendingMessage) params.set('pendingMessage', pendingMessage);
 
+    window.location.href = `/api/auth/google/incremental?${params.toString()}`;
+  }, []);
+
+  // ─── Logout ─────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     setState((s) => ({ ...s, loading: true }));
     try {
@@ -88,12 +71,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem('pendingChatMessage');
       setState({ user: null, loading: false, error: null });
     }
   }, []);
 
+  // ─── Refresh Profile (after incremental scope grant) ────────────
+  const refreshProfile = useCallback(async () => {
+    try {
+      const res = await authApi.me();
+      localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+      setState((s) => ({ ...s, user: res.user }));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // ─── On Mount: Check for OAuth callback params or verify session ─
   useEffect(() => {
-    const { user, token } = loadStored();
+    // Check if we're being redirected from OAuth callback page
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    const userFromUrl = urlParams.get('user');
+    const errorFromUrl = urlParams.get('error');
+
+    if (errorFromUrl) {
+      setState({ user: null, loading: false, error: `Authentication failed: ${errorFromUrl}` });
+      return;
+    }
+
+    if (tokenFromUrl) {
+      // Coming from OAuth callback — store token and user
+      localStorage.setItem(TOKEN_KEY, tokenFromUrl);
+      if (userFromUrl) {
+        try {
+          const parsedUser = JSON.parse(decodeURIComponent(userFromUrl)) as User;
+          localStorage.setItem(USER_KEY, JSON.stringify(parsedUser));
+          setState({ user: parsedUser, loading: false, error: null });
+        } catch {
+          setState((s) => ({ ...s, loading: false }));
+        }
+      } else {
+        setState((s) => ({ ...s, loading: false }));
+      }
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+
+    // Normal mount — verify existing session
+    const { token } = loadStored();
     if (!token) {
       setState((s) => ({ ...s, loading: false }));
       return;
@@ -101,9 +128,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authApi
       .me()
       .then((res) => {
-        const u = res.user;
-        localStorage.setItem(USER_KEY, JSON.stringify(u));
-        setState((s) => ({ ...s, user: u, loading: false }));
+        localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+        setState((s) => ({ ...s, user: res.user, loading: false }));
       })
       .catch(() => {
         localStorage.removeItem(TOKEN_KEY);
@@ -112,6 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
   }, []);
 
+  // ─── Listen for auth:logout events ──────────────────────────────
   useEffect(() => {
     const onLogout = () => {
       localStorage.removeItem(TOKEN_KEY);
@@ -124,10 +151,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value: AuthContextValue = {
     ...state,
-    login,
-    register,
+    loginWithGoogle,
+    requestScope,
     logout,
     clearError,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

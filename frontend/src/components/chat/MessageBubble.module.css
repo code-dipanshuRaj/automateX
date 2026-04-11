@@ -21,6 +21,15 @@
   border-bottom-left-radius: 4px;
 }
 
+.system {
+  align-self: flex-start;
+  background: rgba(251, 188, 5, 0.08);
+  color: var(--text-primary);
+  border: 1px solid rgba(251, 188, 5, 0.25);
+  border-bottom-left-radius: 4px;
+  font-style: italic;
+}
+
 .content {
   white-space: pre-wrap;
   word-break: break-word;

@@ -1,6 +1,5 @@
 /**
- * API client — assumes backend routes to be implemented.
- * Base URL is proxied via Vite: /api -> orchestrator (e.g. localhost:3000).
+ * API client — backend routes proxied via Vite: /api -> orchestrator.
  */
 
 const API_BASE = '/api';
@@ -23,33 +22,35 @@ async function request<T>(
   }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error((err as { message?: string }).message ?? 'Request failed');
+    const errorBody = err as { error?: { message?: string }, message?: string };
+    throw new Error(errorBody.error?.message || errorBody.message || 'Request failed');
   }
   return res.json() as Promise<T>;
 }
 
-// Auth (backend: POST /api/auth/login, /api/auth/register, GET /api/auth/me, POST /api/auth/logout)
+// ─── Auth ────────────────────────────────────────────────────────────
 export const authApi = {
-  login: (payload: { email: string; password: string }) =>
-    request<{ user: import('@/types').User; token?: string; expiresAt?: string }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-
-  register: (payload: { email: string; password: string; displayName?: string }) =>
-    request<{ user: import('@/types').User; token?: string; expiresAt?: string }>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-
+  /** GET /api/auth/me — fetch current user profile + granted scopes */
   me: () =>
     request<{ user: import('@/types').User }>('/auth/me'),
 
+  /** GET /api/auth/profile — same as me */
+  profile: () =>
+    request<{ user: import('@/types').User }>('/auth/profile'),
+
+  /** POST /api/auth/logout */
   logout: () =>
     request<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
+
+  /** POST /api/auth/refresh */
+  refresh: (token: string) =>
+    request<{ newToken: string; expiresIn: number }>('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
 };
 
-// Chat (backend: POST /api/chat/send, GET /api/chat/history?sessionId=, GET /api/chat/sessions)
+// ─── Chat ────────────────────────────────────────────────────────────
 export const chatApi = {
   sendMessage: (payload: { text: string; sessionId?: string }) =>
     request<import('@/types').SendMessageResponse>('/chat/send', {
@@ -64,7 +65,7 @@ export const chatApi = {
     request<{ sessions: import('@/types').SessionInfo[] }>('/chat/sessions'),
 };
 
-// Plan (backend: POST /api/plan/approve, POST /api/plan/reject)
+// ─── Plan ────────────────────────────────────────────────────────────
 export const planApi = {
   approve: (planId: string) =>
     request<{ plan: import('@/types').PlanPayload }>('/plan/approve', {
@@ -77,4 +78,15 @@ export const planApi = {
       method: 'POST',
       body: JSON.stringify({ planId }),
     }),
+};
+
+// ─── Connectors ──────────────────────────────────────────────────────
+export const connectorsApi = {
+  status: () =>
+    request<{
+      google_calendar: boolean;
+      gmail: boolean;
+      google_tasks: boolean;
+      grantedScopes: string[];
+    }>('/connectors/status'),
 };

@@ -10,6 +10,14 @@ export default function Header() {
       <div className={styles.headerInner}>
         <span className={styles.appName}>Task Automate</span>
         <div className={styles.userRow}>
+          {user?.avatarUrl && (
+            <img
+              src={user.avatarUrl}
+              alt=""
+              className={styles.avatar}
+              referrerPolicy="no-referrer"
+            />
+          )}
           <span className={styles.userName}>{name}</span>
           <button type="button" onClick={() => logout()} className={styles.logoutBtn}>
             Sign out

@@ -12,12 +12,16 @@ function formatTime(iso: string) {
 
 export default function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
+  const isSystem = message.role === 'system';
+
+  const className = isUser
+    ? `${styles.bubble} ${styles.user}`
+    : isSystem
+      ? `${styles.bubble} ${styles.system}`
+      : `${styles.bubble} ${styles.assistant}`;
 
   return (
-    <div
-      className={isUser ? `${styles.bubble} ${styles.user}` : `${styles.bubble} ${styles.assistant}`}
-      data-role={message.role}
-    >
+    <div className={className} data-role={message.role}>
       <div className={styles.content}>{message.content}</div>
       <span className={styles.time}>{formatTime(message.timestamp)}</span>
     </div>

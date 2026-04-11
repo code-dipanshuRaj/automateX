@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import Layout from '@/components/Layout/Layout';
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
-import Register from '@/pages/Register';
+import OAuthCallback from '@/pages/OAuthCallback';
 import Dashboard from '@/pages/Dashboard';
 import Sessions from '@/pages/Sessions';
 
@@ -33,7 +33,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<LandingRoute><Landing /></LandingRoute>} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/auth/callback" element={<OAuthCallback />} />
       <Route
         path="/dashboard"
         element={
