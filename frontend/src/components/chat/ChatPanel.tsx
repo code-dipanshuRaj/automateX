@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { PlanPayload } from '@/types';
 import { chatApi, planApi } from '@/api/client';
 import type { ChatMessage } from '@/types';
 import MessageList from './MessageList';
@@ -15,11 +16,27 @@ export default function ChatPanel({ sessionId, onSessionChange }: ChatPanelProps
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  // Tracks plans by ID so history reloads don't lose plan data
+  const planCacheRef = useRef<Map<string, PlanPayload>>(new Map());
+  // Skip history reload when we just sent a message and already have the response
+  const skipNextHistoryRef = useRef(false);
 
   const loadHistory = useCallback(async (sid: string) => {
+    // If we just sent a message, skip reloading from server — we already have latest state
+    if (skipNextHistoryRef.current) {
+      skipNextHistoryRef.current = false;
+      return;
+    }
     try {
       const res = await chatApi.getHistory(sid);
-      setMessages(res.messages ?? []);
+      // Re-attach cached plan data to messages (server history doesn't persist plans)
+      const msgs = (res.messages ?? []).map((m) => {
+        if (m.plan?.id && planCacheRef.current.has(m.plan.id)) {
+          return { ...m, plan: planCacheRef.current.get(m.plan.id)! };
+        }
+        return m;
+      });
+      setMessages(msgs);
     } catch {
       setMessages([]);
     }
@@ -71,6 +88,16 @@ export default function ChatPanel({ sessionId, onSessionChange }: ChatPanelProps
 
       try {
         const res = await chatApi.sendMessage({ text, sessionId: sessionId ?? undefined });
+
+        // Cache plan data so history reloads don't lose it
+        if (res.plan) {
+          planCacheRef.current.set(res.plan.id, res.plan);
+        }
+
+        // Prevent the useEffect from re-fetching history and overwriting our state
+        if (res.sessionId !== sessionId) {
+          skipNextHistoryRef.current = true;
+        }
         onSessionChange(res.sessionId);
 
         // Check if auth is required
@@ -109,20 +136,44 @@ export default function ChatPanel({ sessionId, onSessionChange }: ChatPanelProps
   const handlePlanAction = useCallback(
     async (planId: string, action: 'approve' | 'reject') => {
       try {
-        if (action === 'approve') await planApi.approve(planId);
-        else await planApi.reject(planId);
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.plan?.id === planId
-              ? {
-                  ...m,
-                  plan: m.plan
-                    ? { ...m.plan, status: action === 'approve' ? 'approved' : 'rejected' }
-                    : undefined,
-                }
-              : m
-          )
-        );
+        if (action === 'approve') {
+          // Mark plan as approved in the UI immediately
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.plan?.id === planId
+                ? { ...m, plan: m.plan ? { ...m.plan, status: 'approved' as const } : undefined }
+                : m
+            )
+          );
+
+          const result = await planApi.approve(planId);
+
+          // Update plan status to completed and add execution result as a new message
+          setMessages((prev) => {
+            const updated = prev.map((m) =>
+              m.plan?.id === planId
+                ? { ...m, plan: m.plan ? { ...m.plan, status: 'executed' as const } : undefined }
+                : m
+            );
+            // Append execution result message
+            updated.push({
+              id: `exec-${Date.now()}`,
+              role: 'assistant' as const,
+              content: result.execution?.reply ?? 'Plan executed.',
+              timestamp: new Date().toISOString(),
+            });
+            return updated;
+          });
+        } else {
+          await planApi.reject(planId);
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.plan?.id === planId
+                ? { ...m, plan: m.plan ? { ...m.plan, status: 'rejected' as const } : undefined }
+                : m
+            )
+          );
+        }
       } catch {
         // show toast or inline error
       }
