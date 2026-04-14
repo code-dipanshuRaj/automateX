@@ -68,7 +68,14 @@ export const chatApi = {
 // ─── Plan ────────────────────────────────────────────────────────────
 export const planApi = {
   approve: (planId: string) =>
-    request<{ plan: import('@/types').PlanPayload }>('/plan/approve', {
+    request<{
+      plan: import('@/types').PlanPayload;
+      execution: {
+        success: boolean;
+        results: Array<{ tool: string; result: Record<string, unknown> }>;
+        reply: string;
+      };
+    }>('/plan/approve', {
       method: 'POST',
       body: JSON.stringify({ planId }),
     }),
