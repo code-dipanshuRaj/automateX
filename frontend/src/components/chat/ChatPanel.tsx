@@ -11,6 +11,105 @@ interface ChatPanelProps {
   onSessionChange: (id: string | null) => void;
 }
 
+// ─── Format execution results into readable text ────────────────────
+type ToolResult = { tool: string; result: Record<string, unknown> };
+type ExecutionPayload = {
+  success: boolean;
+  results: ToolResult[];
+  reply: string;
+};
+
+function formatExecutionResults(execution?: ExecutionPayload): string {
+  if (!execution) return 'Plan executed.';
+
+  const parts: string[] = [];
+
+  for (const { tool, result } of execution.results) {
+    if (result.error) {
+      parts.push(`❌ ${toolLabel(tool)}: ${result.error}`);
+      continue;
+    }
+
+    switch (tool) {
+      case 'list_calendar_events': {
+        const events = (result.events as Array<Record<string, unknown>>) ?? [];
+        if (events.length === 0) {
+          parts.push('📅 No calendar events found for that time range.');
+        } else {
+          parts.push(`📅 Found ${events.length} event(s):\n`);
+          events.forEach((ev, i) => {
+            const start = formatDateTime(ev.start as string);
+            const end = formatDateTime(ev.end as string);
+            const link = ev.htmlLink ? ` — ${ev.htmlLink}` : '';
+            parts.push(`  ${i + 1}. ${ev.summary ?? '(No title)'}  ·  ${start} → ${end}${link}`);
+          });
+        }
+        break;
+      }
+      case 'create_calendar_event': {
+        const start = formatDateTime(result.start as string);
+        const end = formatDateTime(result.end as string);
+        const link = result.htmlLink ? `\n  🔗 ${result.htmlLink}` : '';
+        parts.push(`✅ Created event "${result.summary}"  ·  ${start} → ${end}${link}`);
+        break;
+      }
+      case 'list_tasks': {
+        const tasks = (result.tasks as Array<Record<string, unknown>>) ?? [];
+        if (tasks.length === 0) {
+          parts.push('📋 No open tasks found.');
+        } else {
+          parts.push(`📋 Found ${tasks.length} task(s):\n`);
+          tasks.forEach((t, i) => {
+            const due = t.due ? `  ·  due ${formatDateTime(t.due as string)}` : '';
+            const status = t.status === 'completed' ? ' ✓' : '';
+            parts.push(`  ${i + 1}. ${t.title ?? '(No title)'}${due}${status}`);
+          });
+        }
+        break;
+      }
+      case 'create_task': {
+        const due = result.due ? `  ·  due ${formatDateTime(result.due as string)}` : '';
+        parts.push(`✅ Created task "${result.title}"${due}`);
+        break;
+      }
+      case 'send_email': {
+        parts.push(`✅ Email sent to ${result.to}  ·  Subject: "${result.subject}"`);
+        break;
+      }
+      default: {
+        parts.push(`✅ ${toolLabel(tool)} completed.`);
+        break;
+      }
+    }
+  }
+
+  return parts.join('\n') || execution.reply;
+}
+
+function toolLabel(tool: string): string {
+  const labels: Record<string, string> = {
+    create_calendar_event: 'Create calendar event',
+    list_calendar_events: 'List calendar events',
+    send_email: 'Send email',
+    create_task: 'Create task',
+    list_tasks: 'List tasks',
+  };
+  return labels[tool] ?? tool;
+}
+
+function formatDateTime(iso?: string): string {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, {
+      weekday: 'short', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
+
 export default function ChatPanel({ sessionId, onSessionChange }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -148,6 +247,9 @@ export default function ChatPanel({ sessionId, onSessionChange }: ChatPanelProps
 
           const result = await planApi.approve(planId);
 
+          // Build a human-readable reply from the actual execution results
+          const replyContent = formatExecutionResults(result.execution);
+
           // Update plan status to completed and add execution result as a new message
           setMessages((prev) => {
             const updated = prev.map((m) =>
@@ -155,11 +257,11 @@ export default function ChatPanel({ sessionId, onSessionChange }: ChatPanelProps
                 ? { ...m, plan: m.plan ? { ...m.plan, status: 'executed' as const } : undefined }
                 : m
             );
-            // Append execution result message
+            // Append execution result message with actual data
             updated.push({
               id: `exec-${Date.now()}`,
               role: 'assistant' as const,
-              content: result.execution?.reply ?? 'Plan executed.',
+              content: replyContent,
               timestamp: new Date().toISOString(),
             });
             return updated;

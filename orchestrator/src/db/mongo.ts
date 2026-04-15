@@ -77,6 +77,7 @@ async function ensureBasicIndexes() {
   const sessions = db.collection('sessions');
   const tasks = db.collection('tasks');
   const auditLogs = db.collection('audit_logs');
+  const chatSessions = db.collection('chat_sessions');
 
   // Google OAuth: unique on googleId, index on email
   await users.createIndex({ googleId: 1 }, { unique: true });
@@ -87,4 +88,6 @@ async function ensureBasicIndexes() {
 
   await tasks.createIndex({ planId: 1 });
   await auditLogs.createIndex({ timestamp: -1 });
+
+  await chatSessions.createIndex({ userId: 1 });
 }
