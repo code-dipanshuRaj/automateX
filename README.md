@@ -1,5 +1,5 @@
 # Intelligent Task Automation Platform  
-**AI-powered Chatbot with Task Execution, RAG, and ETL Analytics**
+**AI-powered Chatbot with Task Execution, RAG**
 
 ---
 
@@ -47,9 +47,6 @@ This project is intentionally scoped to demonstrate **AI integration for softwar
 - **RAG is used for grounding, not creativity**  
   Ensures factual responses from documents and policies.
 
-- **ETL usage**  
-  Enables monitoring, debugging, and continuous improvement.
-
 ---
 
 ## Complete Tech Stack
@@ -60,7 +57,7 @@ This project is intentionally scoped to demonstrate **AI integration for softwar
 
 ---
 
-### Frontend
+### Frontend (Always use latest versions, avoid conflicts or dependency issues)
 - **React**
 - **Vite**
 - **Tailwind CSS**

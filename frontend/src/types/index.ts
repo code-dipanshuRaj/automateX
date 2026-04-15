@@ -1,19 +1,10 @@
-// Auth (backend to design: JWT or session)
+// ─── Auth ────────────────────────────────────────────────────────────
 export interface User {
   id: string;
   email: string;
   displayName?: string;
-}
-
-export interface LoginPayload {
-  email: string;
-  password: string;
-}
-
-export interface RegisterPayload {
-  email: string;
-  password: string;
-  displayName?: string;
+  avatarUrl?: string;
+  grantedScopes?: string[];
 }
 
 export interface AuthResponse {
@@ -22,8 +13,15 @@ export interface AuthResponse {
   expiresAt?: string;
 }
 
-// Chat & plan (backend: /api/chat/*, /api/plan/*)
+// ─── Chat & Plan ────────────────────────────────────────────────────
 export type MessageRole = 'user' | 'assistant' | 'system';
+
+export interface AuthRequiredPayload {
+  status: 'auth_required';
+  requiredScope: string;
+  scopeLabel: string;
+  originalMessage?: string;
+}
 
 export interface ChatMessage {
   id: string;
@@ -31,6 +29,7 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   plan?: PlanPayload | null;
+  authRequired?: AuthRequiredPayload | null;
 }
 
 export interface PlanStep {
@@ -55,12 +54,32 @@ export interface SendMessageResponse {
   message: ChatMessage;
   plan?: PlanPayload | null;
   sessionId: string;
+  authRequired?: AuthRequiredPayload | null;
 }
 
-// Session (backend: /api/session/*)
+// ─── Session ────────────────────────────────────────────────────────
 export interface SessionInfo {
   id: string;
   createdAt: string;
   lastActivityAt: string;
   messageCount?: number;
 }
+
+// ─── Scope Metadata ─────────────────────────────────────────────────
+export const SCOPE_META: Record<string, { label: string; icon: string; description: string }> = {
+  'https://www.googleapis.com/auth/calendar': {
+    label: 'Google Calendar',
+    icon: '📅',
+    description: 'Create, view, and manage your calendar events',
+  },
+  'https://www.googleapis.com/auth/gmail.send': {
+    label: 'Gmail',
+    icon: '✉️',
+    description: 'Send emails on your behalf',
+  },
+  'https://www.googleapis.com/auth/tasks': {
+    label: 'Google Tasks',
+    icon: '📋',
+    description: 'Create and manage your tasks',
+  },
+};
