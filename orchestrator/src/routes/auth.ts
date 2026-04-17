@@ -17,7 +17,7 @@ router.get('/google', (_req, res) => {
 // ─── Google OAuth: Callback (exchanges code, creates/updates user) ──
 router.get('/google/callback', async (req, res, next) => {
   try {
-    const { code, error: oauthError } = req.query as { code?: string; error?: string };
+    const { code, error: oauthError, state } = req.query as { code?: string; error?: string; state?: string };
 
     if (oauthError) {
       logger.warn('google_oauth_error', { error: oauthError });
@@ -39,7 +39,19 @@ router.get('/google/callback', async (req, res, next) => {
       grantedScopes: result.user.grantedScopes,
     }));
 
-    const redirectUrl = `${config.frontendUrl}/auth/callback?token=${result.token}&user=${userPayload}`;
+    let scopeGrantedStr = '';
+    if (state) {
+      try {
+        const decodedState = JSON.parse(Buffer.from(state, 'base64').toString('utf8'));
+        if (decodedState.pendingMessage) {
+          scopeGrantedStr = '&scope_granted=true';
+        }
+      } catch (e) {
+        // Ignore parsing errors for state
+      }
+    }
+
+    const redirectUrl = `${config.frontendUrl}/auth/callback?token=${result.token}&user=${userPayload}${scopeGrantedStr}`;
     return res.redirect(redirectUrl);
   } catch (err) {
     logger.error('google_callback_error', { error: (err as Error).message });
