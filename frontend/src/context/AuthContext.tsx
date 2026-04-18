@@ -114,8 +114,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setState((s) => ({ ...s, loading: false }));
       }
-      // Clean URL
-      window.history.replaceState({}, '', window.location.pathname);
+      
+      const searchToKeep = new URLSearchParams();
+      if (urlParams.has('scope_granted')) searchToKeep.set('scope_granted', 'true');
+      if (urlParams.has('auth_error')) searchToKeep.set('auth_error', urlParams.get('auth_error')!);
+      const newSearch = searchToKeep.toString() ? `?${searchToKeep.toString()}` : '';
+      
+      window.history.replaceState({}, '', window.location.pathname + newSearch);
       return;
     }
 

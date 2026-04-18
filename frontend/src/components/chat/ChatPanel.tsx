@@ -154,24 +154,6 @@ export default function ChatPanel({ sessionId, onSessionChange }: ChatPanelProps
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // ─── Check for pending message after incremental auth ───────────
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const scopeGranted = params.get('scope_granted');
-    const pendingMessage = sessionStorage.getItem('pendingChatMessage');
-
-    if (scopeGranted && pendingMessage) {
-      // Clear the pending message
-      sessionStorage.removeItem('pendingChatMessage');
-      // Clean URL
-      window.history.replaceState({}, '', window.location.pathname);
-      // Auto-resend the original message
-      handleSend(pendingMessage);
-    } else if (scopeGranted) {
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   const handleSend = useCallback(
     async (text: string) => {
       setError(null);
@@ -231,6 +213,35 @@ export default function ChatPanel({ sessionId, onSessionChange }: ChatPanelProps
     },
     [sessionId, onSessionChange, scrollToBottom]
   );
+
+  // ─── Check for pending message after incremental auth ───────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const scopeGranted = params.get('scope_granted');
+    const authError = params.get('auth_error');
+    const pendingMessage = sessionStorage.getItem('pendingChatMessage');
+
+    if (authError && pendingMessage) {
+      sessionStorage.removeItem('pendingChatMessage');
+      window.history.replaceState({}, '', window.location.pathname);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          role: 'system',
+          content: `Authorization was not granted. Could not proceed with your request.`,
+          timestamp: new Date().toISOString()
+        }
+      ]);
+      scrollToBottom();
+    } else if (scopeGranted && pendingMessage) {
+      sessionStorage.removeItem('pendingChatMessage');
+      window.history.replaceState({}, '', window.location.pathname);
+      handleSend(pendingMessage);
+    } else if (scopeGranted || authError) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [handleSend, scrollToBottom]);
 
   const handlePlanAction = useCallback(
     async (planId: string, action: 'approve' | 'reject') => {
