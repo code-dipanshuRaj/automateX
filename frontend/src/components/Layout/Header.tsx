@@ -1,5 +1,6 @@
 import { useAuth } from '@/context/AuthContext';
 import styles from './Layout.module.css';
+import AutomateXLogo from './AutomateXLogo';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -8,7 +9,10 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>
-        <span className={styles.appName}>Task Automate</span>
+        <div className={styles.logoContainer}>
+          <AutomateXLogo className={styles.logoIcon} />
+          <span className={styles.appName}>Task Automate</span>
+        </div>
         <div className={styles.userRow}>
           {user?.avatarUrl && (
             <img

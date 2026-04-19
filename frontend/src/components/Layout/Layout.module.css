@@ -28,6 +28,16 @@
   letter-spacing: -0.02em;
 }
 
+.logoContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logoIcon {
+  flex-shrink: 0;
+}
+
 .userRow {
   display: flex;
   align-items: center;
@@ -77,6 +87,27 @@
   border-right: 1px solid var(--border);
   background: var(--bg-card);
   padding: 1rem 0;
+}
+
+.newChatWrap {
+  padding: 0 1rem 1rem 1rem;
+}
+
+.newChatBtn {
+  width: 100%;
+  padding: 0.6rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.newChatBtn:hover {
+  opacity: 0.9;
 }
 
 .nav {
