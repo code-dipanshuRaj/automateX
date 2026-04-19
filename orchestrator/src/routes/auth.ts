@@ -19,8 +19,25 @@ router.get('/google/callback', async (req, res, next) => {
   try {
     const { code, error: oauthError, state } = req.query as { code?: string; error?: string; state?: string };
 
+    let isIncremental = false;
+    let scopeGrantedStr = '';
+    if (state) {
+      try {
+        const decodedState = JSON.parse(Buffer.from(state, 'base64').toString('utf8'));
+        if (decodedState.pendingMessage !== undefined) {
+          isIncremental = true;
+          if (!oauthError) scopeGrantedStr = '&scope_granted=true';
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
+    }
+
     if (oauthError) {
       logger.warn('google_oauth_error', { error: oauthError });
+      if (isIncremental) {
+        return res.redirect(`${config.frontendUrl}/?auth_error=${oauthError}`);
+      }
       return res.redirect(`${config.frontendUrl}/login?error=oauth_denied`);
     }
 
@@ -38,18 +55,6 @@ router.get('/google/callback', async (req, res, next) => {
       avatarUrl: result.user.avatarUrl,
       grantedScopes: result.user.grantedScopes,
     }));
-
-    let scopeGrantedStr = '';
-    if (state) {
-      try {
-        const decodedState = JSON.parse(Buffer.from(state, 'base64').toString('utf8'));
-        if (decodedState.pendingMessage) {
-          scopeGrantedStr = '&scope_granted=true';
-        }
-      } catch (e) {
-        // Ignore parsing errors for state
-      }
-    }
 
     const redirectUrl = `${config.frontendUrl}/auth/callback?token=${result.token}&user=${userPayload}${scopeGrantedStr}`;
     return res.redirect(redirectUrl);

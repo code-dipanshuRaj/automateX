@@ -1,21 +1,32 @@
 .bubble {
   max-width: 85%;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   border-radius: var(--radius-lg);
-  font-size: 0.9375rem;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  animation: messageSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom center;
+}
+
+@keyframes messageSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .user {
   align-self: flex-end;
-  background: var(--primary);
-  color: white;
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+  color: #fff;
   border-bottom-right-radius: 4px;
+  box-shadow: var(--shadow-glow);
 }
 
 .assistant {
   align-self: flex-start;
   background: var(--bg-bubble);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-bottom-left-radius: 4px;
@@ -23,9 +34,9 @@
 
 .system {
   align-self: flex-start;
-  background: rgba(251, 188, 5, 0.08);
+  background: rgba(251, 188, 5, 0.05);
   color: var(--text-primary);
-  border: 1px solid rgba(251, 188, 5, 0.25);
+  border: 1px solid rgba(251, 188, 5, 0.2);
   border-bottom-left-radius: 4px;
   font-style: italic;
 }
@@ -37,11 +48,13 @@
 
 .time {
   display: block;
-  margin-top: 0.35rem;
-  font-size: 0.7rem;
-  opacity: 0.8;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  letter-spacing: 0.02em;
 }
 
 .user .time {
   text-align: right;
+  opacity: 0.8;
 }

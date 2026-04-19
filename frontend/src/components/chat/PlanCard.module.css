@@ -1,44 +1,65 @@
 .card {
   align-self: flex-start;
   max-width: 85%;
-  padding: 1rem 1.25rem;
-  background: var(--bg-plan);
-  border: 1px solid var(--border);
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-highlight);
   border-radius: var(--radius-lg);
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: cardSlide 0.4s ease-out;
+}
+
+@keyframes cardSlide {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .header {
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .title {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .summary {
-  margin-top: 0.35rem;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.5;
 }
 
 .steps {
   list-style: none;
   padding: 0;
-  margin: 0 0 1rem 0;
+  margin: 0 0 1.25rem 0;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius);
+  padding: 0.5rem;
 }
 
 .step {
   display: flex;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
+  gap: 1rem;
+  padding: 0.75rem;
   border-bottom: 1px solid var(--border);
-  font-size: 0.875rem;
+  font-size: 0.9rem;
+  transition: background 0.2s ease;
+  border-radius: 6px;
+}
+
+.step:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .step:last-child {
@@ -47,54 +68,57 @@
 
 .stepNum {
   flex-shrink: 0;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--primary-alpha);
   color: var(--primary);
-  border-radius: var(--radius);
-  font-weight: 600;
-  font-size: 0.75rem;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.8rem;
+  box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.3);
 }
 
 .stepAction {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .stepDesc {
-  margin: 0.2rem 0 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  line-height: 1.4;
+  margin: 0.25rem 0 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   justify-content: flex-end;
 }
 
 .approve,
 .reject {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9rem;
   font-weight: 600;
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: background 0.15s, transform 0.05s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .approve {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
   color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 }
 
 .approve:hover {
-  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
 }
 
 .reject {
@@ -106,9 +130,10 @@
 .reject:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+  border-color: var(--text-muted);
 }
 
 .approve:active,
 .reject:active {
-  transform: scale(0.98);
+  transform: translateY(1px);
 }
