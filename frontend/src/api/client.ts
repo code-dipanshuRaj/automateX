@@ -9,11 +9,14 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = localStorage.getItem('token');
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+  const headers: Record<string, string> = {
     ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
+
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (res.status === 401) {
     localStorage.removeItem('token');
@@ -96,4 +99,15 @@ export const connectorsApi = {
       google_tasks: boolean;
       grantedScopes: string[];
     }>('/connectors/status'),
+};
+// ─── RAG ──────────────────────────────────────────────────────────────
+export const ragApi = {
+  uploadDocument: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ success: boolean; filename: string; pages: number; chunks_indexed: number }>('/rag/upload', {
+      method: 'POST',
+      body: formData,
+    });
+  },
 };

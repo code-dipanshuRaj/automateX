@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import styles from './Layout.module.css';
 
 const nav = [
@@ -7,8 +7,21 @@ const nav = [
 ];
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+
   return (
     <aside className={styles.sidebar}>
+      <div className={styles.newChatWrap}>
+        <button 
+          onClick={() => {
+            sessionStorage.removeItem('chatSessionId');
+            navigate('/dashboard', { replace: true });
+          }} 
+          className={styles.newChatBtn}
+        >
+          + New Chat
+        </button>
+      </div>
       <nav className={styles.nav}>
         {nav.map(({ to, label }) => (
           <NavLink
