@@ -13,6 +13,7 @@ import sessionRouter from './routes/session';
 import connectorsRouter from './routes/connectors';
 import planRouter from './routes/plan';
 import chatRouter from './routes/chat';
+import ragRouter from './routes/rag';
 
 export function createApp() {
   const app = express();
@@ -44,6 +45,7 @@ export function createApp() {
   app.use('/api/connectors', connectorsRouter);
   app.use('/api/plan', planRouter);
   app.use('/api/chat', chatRouter);
+  app.use('/api/rag', ragRouter);
 
   // Error handler (last)
   app.use(errorHandler);
