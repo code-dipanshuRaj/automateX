@@ -237,8 +237,30 @@ export async function processMessage(
 
   const chat = model.startChat({ history });
 
-  // Send user message
-  let result = await chat.sendMessage(userMessage);
+  // ── Fetch RAG Context ──
+  let ragContext = '';
+  try {
+    const ragServiceUrl = config.ragServiceUrl || 'http://127.0.0.1:8000';
+    const ragRes = await fetch(`${ragServiceUrl}/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: userMessage, top_k: 3 }),
+    });
+    if (ragRes.ok) {
+      const data = await (ragRes.json() as Promise<{ contexts?: Array<{ content: string }> }>);
+      if (data.contexts && data.contexts.length > 0) {
+        ragContext = `[Context from Knowledge Base/Uploaded Documents]:\n${data.contexts.map((c) => c.content).join('\n\n')}\n\n`;
+        logger.info('rag_context_injected', { userId, contextsFound: data.contexts.length });
+      }
+    }
+  } catch (err) {
+    logger.error('rag_query_failed', { error: err instanceof Error ? err.message : String(err) });
+  }
+
+  const promptToLLM = ragContext ? `${ragContext}User Query: ${userMessage}` : userMessage;
+
+  // Send user message with built context
+  let result = await chat.sendMessage(promptToLLM);
   let response = result.response;
 
   // Tool-calling loop: handle up to 5 successive iterations
