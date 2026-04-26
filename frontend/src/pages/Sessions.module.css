@@ -31,6 +31,12 @@
   border-radius: var(--radius);
   margin-bottom: 0.5rem;
   background: var(--bg-card);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.item:hover {
+  border-color: var(--accent);
 }
 
 .id {

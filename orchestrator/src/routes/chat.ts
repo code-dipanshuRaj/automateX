@@ -21,9 +21,20 @@ router.post('/send', verifyToken, async (req, res, next) => {
       return res.status(400).json({ error: { message: 'Text is required' } });
     }
 
-    const sessionId = clientSessionId || uuidv4();
     const db = await getDatabase();
     const chatSessions = db.collection<ChatSessionDoc>('chat_sessions');
+    
+    let sessionId = clientSessionId;
+
+    // If client provided an ID, verify it actually exists and belongs to them
+    if (clientSessionId) {
+      const existing = await chatSessions.findOne({ _id: clientSessionId, userId: user.userId });
+      if (!existing) {
+        return res.status(404).json({ error: { message: 'Chat session not found or deleted' } });
+      }
+    } else {
+      sessionId = uuidv4();
+    }
 
     // Add user message to history
     const userMsg: ConversationMessage = {
@@ -49,7 +60,7 @@ router.post('/send', verifyToken, async (req, res, next) => {
     const previousHistory = fullHistory.slice(0, -1);
 
     // Process through LLM
-    const result = await processMessage(user.userId, text, previousHistory, sessionId);
+    const result = await processMessage(user.userId, text, previousHistory, sessionId!);
 
     // If auth is required, return the auth_required payload
     if (result.authRequired) {
@@ -124,7 +135,7 @@ router.get('/history', verifyToken, async (req, res, next) => {
 
     const { sessionId } = req.query as { sessionId?: string };
     if (!sessionId) {
-      return res.json({ messages: [] });
+       return res.status(400).json({ error: { message: 'Session ID is required' }});
     }
 
     const db = await getDatabase();
@@ -132,7 +143,7 @@ router.get('/history', verifyToken, async (req, res, next) => {
     const sessionDoc = await chatSessions.findOne({ _id: sessionId, userId: user.userId });
 
     if (!sessionDoc) {
-      return res.json({ messages: [] });
+      return res.status(404).json({ error: { message: 'Chat session not found or deleted' } });
     }
 
     const messages = sessionDoc.messages.map((m, i) => ({

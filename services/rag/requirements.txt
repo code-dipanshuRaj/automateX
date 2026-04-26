@@ -1,0 +1,7 @@
+# RAG Service — retrieval + optional generation
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Add: vector store (chromadb / pinecone / pgvector), embeddings, optional LLM
+python-multipart>=0.0.9
+PyPDF2>=3.0.0

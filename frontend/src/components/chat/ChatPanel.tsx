@@ -138,8 +138,10 @@ export default function ChatPanel({ sessionId, onSessionChange }: ChatPanelProps
       setMessages(msgs);
     } catch {
       setMessages([]);
+      window.alert('Chat session does not exist or has been deleted.');
+      onSessionChange(null);
     }
-  }, []);
+  }, [onSessionChange]);
 
   useEffect(() => {
     if (sessionId) loadHistory(sessionId);
