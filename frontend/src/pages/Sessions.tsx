@@ -12,7 +12,7 @@ export default function Sessions() {
 
   const handleSessionClick = (id: string) => {
     sessionStorage.setItem('chatSessionId', id);
-    navigate('/dashboard');
+    navigate(`/dashboard?session=${encodeURIComponent(id)}`);
   };
 
   useEffect(() => {
